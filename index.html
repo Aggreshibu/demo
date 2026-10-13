@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手続きの適切性に関する調査デモ</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:#243044;background:#f5f7fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:880px;margin:35px auto;padding:0 18px}header{margin-bottom:22px}h1{font-size:1.5rem;margin:0 0 8px}h2{font-size:1.1rem;margin:0 0 14px}p{line-height:1.95}.muted{color:#627084;font-size:.9rem}.panel{background:#fff;border:1px solid #dce2e9;border-radius:13px;padding:24px;margin:18px 0;box-shadow:0 3px 12px #23334d08}.controls{display:grid;grid-template-columns:1fr 1fr;gap:16px}label{display:block;font-weight:650;margin-bottom:7px}select{width:100%;padding:11px;border:1px solid #aeb9c7;border-radius:8px;background:white;font-size:1rem}.tag{font-size:.82rem;color:#536578;background:#edf2f7;border-radius:5px;padding:5px 9px;display:inline-block;margin-bottom:10px}.vignette p{margin:0 0 15px}.question{font-weight:700;margin:24px 0 12px}.scale{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}.choice{cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid #aeb9c7;border-radius:8px;min-height:48px;font-weight:650}.choice input{position:absolute;opacity:0}.choice:has(input:checked){background:#1f497d;color:white;border-color:#1f497d}.choice:focus-within{outline:3px solid #83b4f4}.ends{display:flex;justify-content:space-between;gap:12px;font-size:.82rem;color:#5c6b7e;margin:8px 0 0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}button{border:1px solid #1f497d;border-radius:8px;background:#1f497d;color:white;padding:10px 16px;cursor:pointer;font-weight:650}button.secondary{background:white;color:#1f497d}button:disabled{opacity:.4;cursor:not-allowed}.research{border-top:1px solid #e1e5ea;margin-top:20px;padding-top:15px}details summary{cursor:pointer;font-weight:650}table{border-collapse:collapse;width:100%;margin-top:12px;font-size:.9rem}th,td{text-align:left;border-bottom:1px solid #e2e7ee;padding:9px}th{width:36%;background:#f8fafc}.notice{background:#f0f5fa;padding:12px 15px;border-radius:8px;font-size:.87rem;line-height:1.7}@media(max-width:620px){.wrap{margin:15px auto}.panel{padding:17px}.controls{grid-template-columns:1fr}.scale{grid-template-columns:repeat(5,1fr)}h1{font-size:1.3rem}}
+</style>
+</head>
+<body><main class="wrap">
+<header><h1>技術の実施に関する手続きの評価調査（デモ）</h1><div class="muted">文章・実験計画の確認用｜回答は保存・送信されません</div></header>
+<section class="panel"><h2>デモの表示条件</h2><div class="controls"><div><label for="actor">実施主体</label><select id="actor"><option value="state">国・行政機関</option><option value="large">民間の大手企業</option><option value="startup">スタートアップ</option></select></div><div><label for="profile">質問文章（プロフィール）</label><select id="profile"></select></div></div><p class="muted">実際の調査では、実施主体とプロフィールは実験計画に従って割り当てます。この画面では確認のため自由に切り替えられます。</p></section>
+<section class="panel"><span class="tag" id="questionNumber"></span><h2>以下の文章を読んで、質問にお答えください。</h2><div id="vignette" class="vignette" aria-live="polite"></div><div class="question">この取り組みを実施する際の手続きについて、全体としてどの程度適切だと思いますか。</div><div class="scale" id="scale" role="radiogroup" aria-label="手続きの適切性の評価"></div><div class="ends"><span>1：まったく適切でない</span><span>10：非常に適切である</span></div><div class="actions"><button class="secondary" id="prev">前の文章</button><button id="next">次の文章</button><button class="secondary" id="reset">評価をクリア</button></div><div class="research"><details><summary>確認用：属性・水準と文章量を確認</summary><table id="metadata"></table><p class="muted" id="length"></p></details></div></section>
+<div class="notice">このページは調査画面の試作品です。評価はブラウザ内で一時的に表示するだけです。</div>
+</main>
+<script>
+'use strict';
+const actors={state:'国・行政機関',large:'民間の大手企業',startup:'スタートアップ企業'};
+const texts={
+ human:[
+ '実施前に、人権への影響を評価し、実施による利益と人権への影響を比較して、実施の可否や方法を判断する手続きは設けられていません。',
+ '実施前に、人権への影響を評価し、実施による利益と人権への影響を比較して、実施の可否や方法を判断します。'
+ ],
+ info:[
+ '使用する技術の仕組みや安全性については、説明を行いません。',
+ '使用する技術の仕組みや安全性については、その概要を説明します。',
+ '使用する技術の仕組みや安全性については、営業上の秘密や公開によって悪用されるおそれのある情報を除き、詳細に説明します。'
+ ],
+ participation:[
+ '実施の可否や方法については、実施主体のみで検討します。',
+ '実施の可否や方法については、専門家の意見を聴いて検討します。',
+ '実施の可否や方法については、市民との話し合いなどを通じて、市民の意見を取り入れて検討します。'
+ ],
+ followup:[
+ '実施後には、問い合わせ窓口の設置や、実施内容の定期的な見直しは行いません。',
+ '実施後には、取り組みへの不安や人権侵害に関する問い合わせ窓口を設け、回答期限を定めます。実施内容の定期的な見直しは行いません。',
+ '実施後には、技術の変化、実施の効果、市民の意見などを踏まえて定期的に見直し、必要に応じて実施を廃止します。専用の問い合わせ窓口は設けません。'
+ ]
+};
+// Levels: human 0=なし 1=あり; info 0=なし 1=概要 2=詳細;
+// participation 0=実施主体のみ 1=専門家 2=市民; followup 0=なし 1=問い合わせ 2=見直し.
+const profiles=[[1,0,1,1],[0,1,2,1],[1,2,0,1],[1,1,1,2],[1,2,2,2],[0,0,0,2],[0,2,1,0],[1,0,2,0],[1,1,0,0]];
+const levelNames=[['なし','あり'],['なし','概要','詳細'],['実施主体のみ','専門家','市民'],['なし','問い合わせ窓口','定期的な見直し']];
+const attributeNames=['人権への影響評価','技術の説明','意見聴取・参加','実施後の対応'];
+const actorSelect=document.getElementById('actor'),profileSelect=document.getElementById('profile');
+profiles.forEach((_,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=`質問 ${i+1}`;profileSelect.appendChild(opt)});
+let answers={};
+function render(){
+ const i=Number(profileSelect.value),levels=profiles[i],actor=actors[actorSelect.value];
+ const intro=`${actor}が、新しい技術を活用した取り組みを実施することを検討しています。`;
+ const parts=[texts.human[levels[0]],texts.info[levels[1]],texts.participation[levels[2]],texts.followup[levels[3]]];
+ const vignette=document.getElementById('vignette');vignette.replaceChildren();
+ [intro,...parts].forEach(t=>{const p=document.createElement('p');p.textContent=t;vignette.appendChild(p)});
+ document.getElementById('questionNumber').textContent=`質問 ${i+1} / 9`;
+ const scale=document.getElementById('scale');scale.replaceChildren();
+ const key=`${actorSelect.value}-${i}`;
+ for(let n=1;n<=10;n++){
+  const label=document.createElement('label');label.className='choice';label.setAttribute('aria-label',`${n}点`);
+  const input=document.createElement('input');input.type='radio';input.name='rating';input.value=n;input.checked=answers[key]===n;
+  input.addEventListener('change',()=>{answers[key]=n});label.append(input,document.createTextNode(n));scale.appendChild(label);
+ }
+ const table=document.getElementById('metadata');table.replaceChildren();
+ levels.forEach((v,j)=>{const row=document.createElement('tr');const th=document.createElement('th');th.textContent=attributeNames[j];const td=document.createElement('td');td.textContent=levelNames[j][v];row.append(th,td);table.appendChild(row)});
+ document.getElementById('length').textContent=`手続き説明：${parts.join('').length}文字 ／ 導入文を含む本文：${[intro,...parts].join('').length}文字（空白・改行を除く）`;
+ document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===8;
+}
+actorSelect.addEventListener('change',render);profileSelect.addEventListener('change',render);
+document.getElementById('prev').addEventListener('click',()=>{profileSelect.value=Number(profileSelect.value)-1;render()});
+document.getElementById('next').addEventListener('click',()=>{profileSelect.value=Number(profileSelect.value)+1;render()});
+document.getElementById('reset').addEventListener('click',()=>{delete answers[`${actorSelect.value}-${profileSelect.value}`];render()});
+render();
+</script></body></html>
